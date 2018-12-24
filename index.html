@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset=utf-8 />
+  <title>Lab 8: Denver home location exercise</title>
+  <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css" />
+  <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: rgb(43, 43, 43);
+      font-family: "Lato", sans-serif;
+      font-size: 100%;
+      font-weight: 300;
+      color: rgb(172, 172, 172);
+    }
+
+    header,
+    footer,
+    section {
+      padding: 6px 10%;
+      margin: 0 auto;
+      width: 80%
+    }
+
+    h1 {
+      display: inline-block;
+      margin-right: 20px;
+      color: rgb(190, 190, 190);
+      font-size: 3.5em;
+      font-weight: 700;
+    }
+
+    h2 {
+      display: inline-block;
+      color: rgba(255, 200, 0, 0.8);
+      letter-spacing: 0.05em;
+      margin-top: 0px;
+      font-weight: 300;
+      text-transform: uppercase;
+      border-bottom: 1px dotted rgba(255, 200, 0, 0.5);
+      ;
+    }
+
+    #map {
+      width: 80%;
+      height: 540px;
+      margin: 10px auto;
+    }
+
+    p {
+      font-size: 1em;
+      color: rgba(170, 170, 170);
+      ;
+      font-weight: 300;
+      font-size: 1.2em;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>Points of Interest in Denver, CO</h1>
+    <h2>After School Programs, Fire Stations, & Food Stores</h2>
+  </header>
+
+  <div id='map'></div>
+
+  <footer>
+    <p>Map authored by Matthew Upchurch</p>
+    <p>Click anywhere on this map and all of the points of interest within 1 km of that lat/long will be highlighted.
+      The data was acquired by <a href='https://www.denvergov.org/opendata/'>Denver Open Data Catalog</a>.
+      This map is an illustraion of how to make multiple leaflet layers interactive.</p>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js"></script>
+  <script src="data/denver-fire-stations.js"></script>
+  <script src="data/after-school-programs.js"></script>
+  <script src="data/denver-food-stores.js"></script>
+  <script>
+    var map = L.map('map', {
+      center: [39.7256, -104.9252],
+      zoom: 12,
+    });
+
+    var tiles = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/rastertiles/dark_all/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>',
+      subdomains: 'abcd',
+      maxZoom: 19
+    }).addTo(map);
+
+    /* -----    ----- *
+    Template for filtering and styling layers 
+     * -----    ----- */
+
+    var js_files = {
+      storesLayer: {
+        source: stores,
+        color: '#1f78b4',
+        label_source: "STORE_NAME"
+      },
+      programsLayer: {
+        source: programs,
+        color: '#ffffff',
+        label_source: "ORGANIZATI"
+      },
+      stationsLayer: {
+        source: stations,
+        color: '#fdff00',
+        label_source: "STATION_NU"
+      }
+    };
+
+    // Create empty object 
+    var geojsonLayers = {}
+
+    // Iterate through template
+    for (file in js_files) {
+      
+      // console log to see how values are created when passing variables in bracket notation
+      // console.log(js_files[file])
+      // console.log(js_files.file) // undefined
+      // console.log(js_files[file].source)
+      // console.log(js_files[file].color)
+      // console.log(js_files[file].source.features.length)
+
+      // Most important takeaway: variables must be passed using bracket notation
+      // This for loop mixes index and dot notation to display geojson info **without** leaflet
+      for (var i=0; i < js_files[file].source.features.length; i++) {
+        // console.log(js_files[file].source.features[i].properties) // 
+      }
+      
+      // create an object containing all Leaflet geojson layers
+      geojsonLayers[file] = L.geoJson(js_files[file].source, {
+        
+        // Using lLeaflet the array no longer needs bracket notation to access values
+        // The feature parameter accesses each array item and it's coordinates.
+        // Thanks to GeoJSON standardization! 
+        pointToLayer: function (feature, latlng) {
+          // console.log(feature.properties.ZIPCODE, latlng)
+          return L.circleMarker(latlng)
+        },
+
+        // Create a layer for each feature and access properties to build popup
+        onEachFeature: function (feature, layer) {
+          
+          var label = js_files[file].label_source
+          // console.log(label)
+          var tooltip = feature.properties[label]
+          // console.log(tooltip)
+
+          layer.on('mouseover', function () {
+            layer.bindPopup(tooltip).openPopup();
+          });
+          layer.on('mouseout', function () {
+            layer.closePopup();
+          })
+        },
+
+        style: function (feature) {
+          return {
+            fillColor: js_files[file].color,
+            // Common styles for all points
+            weight: 0,
+            fillOpacity: 1,
+            radius: 5
+          }
+        }
+      }).addTo(map);
+    }
+
+    // Using dot notation to access values in the newly created object
+    var sourcesLayers = {
+      "<b style='color:#1f78b4; text-shadow: 0px 0px 1px #333; font-size: 20px'>Stores</b>": geojsonLayers.storesLayer,
+      "<b style='color:#ffffff; text-shadow: 0px 0px 1px #333; font-size: 20px'>Programs</b>": geojsonLayers.programsLayer,
+      "<b style='color:#fdff00; text-shadow: 0px 0px 1px #333; font-size: 20px'>Fire Stations</b>": geojsonLayers.stationsLayer
+    };
+
+    L.control.layers(null, sourcesLayers, {
+      collapsed: false
+    }).addTo(map);
+
+    map.on('click', function (e) {
+
+      // loop through new geojsonLayers to attach click function
+      for (layer in geojsonLayers)
+
+        geojsonLayers[layer].eachLayer(function (layer) {
+          var distance = e.latlng.distanceTo(layer.getLatLng()) / 1000;
+
+          if (distance > 1) {
+            layer.setStyle({
+              stroke: false,
+              fillOpacity: 0.1
+            });
+          } else {
+            layer.setStyle({
+              //stroke: false,
+              fillOpacity: 1
+            });
+          }
+        });
+
+    });
+  </script>
+
+</body>
+
+</html>
