@@ -3,7 +3,7 @@
 
 <head>
   <meta charset=utf-8 />
-  <title>Lab 8: Denver home location exercise</title>
+  <title>Denver After School Programs</title>
   <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css" />
@@ -95,7 +95,7 @@
     }).addTo(map);
 
     /* -----    ----- *
-    Template for filtering and styling layers 
+    Template for filtering and styling layers
      * -----    ----- */
 
     var js_files = {
@@ -116,12 +116,12 @@
       }
     };
 
-    // Create empty object 
+    // Create empty object
     var geojsonLayers = {}
 
     // Iterate through template
     for (file in js_files) {
-      
+
       // console log to see how values are created when passing variables in bracket notation
       // console.log(js_files[file])
       // console.log(js_files.file) // undefined
@@ -132,15 +132,15 @@
       // Most important takeaway: variables must be passed using bracket notation
       // This for loop mixes index and dot notation to display geojson info **without** leaflet
       for (var i=0; i < js_files[file].source.features.length; i++) {
-        // console.log(js_files[file].source.features[i].properties) // 
+        // console.log(js_files[file].source.features[i].properties) //
       }
-      
+
       // create an object containing all Leaflet geojson layers
       geojsonLayers[file] = L.geoJson(js_files[file].source, {
-        
+
         // Using lLeaflet the array no longer needs bracket notation to access values
         // The feature parameter accesses each array item and it's coordinates.
-        // Thanks to GeoJSON standardization! 
+        // Thanks to GeoJSON standardization!
         pointToLayer: function (feature, latlng) {
           // console.log(feature.properties.ZIPCODE, latlng)
           return L.circleMarker(latlng)
@@ -148,7 +148,7 @@
 
         // Create a layer for each feature and access properties to build popup
         onEachFeature: function (feature, layer) {
-          
+
           var label = js_files[file].label_source
           // console.log(label)
           var tooltip = feature.properties[label]
